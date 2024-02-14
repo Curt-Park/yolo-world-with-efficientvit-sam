@@ -4,8 +4,11 @@
 This project is developed and tested on Python3.10.
 
 ```python
+# Create and activate a python 3.10 environment.
 conda create -n efficient-yolo-world-sam python=3.10 -y
 conda activate efficient-yolo-world-sam
+# Setup packages.
+make setup
 ```
 
 

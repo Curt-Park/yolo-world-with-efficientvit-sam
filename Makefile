@@ -14,9 +14,9 @@ endef
 
 setup:
 	pip install -r requirements.txt
-	mim install 'mmengine>=0.6.0'
-	mim install 'mmcv-lite==2.0.1'
-	mim install 'mmdet>=3.0.0,<4.0.0'
+	mim install 'mmengine==0.10.3'
+	mim install 'mmcv-lite==2.0.0'
+	mim install 'mmdet==3.3.0'
 	mim install 'mmyolo==0.6.0'
 
 
