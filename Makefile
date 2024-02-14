@@ -18,6 +18,7 @@ setup:
 	mim install 'mmcv-lite==2.0.0'
 	mim install 'mmdet==3.3.0'
 	mim install 'mmyolo==0.6.0'
+	pip install git+https://github.com/AILab-CVC/YOLO-World.git@master
 
 
 model:

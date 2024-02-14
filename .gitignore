@@ -165,3 +165,7 @@ cython_debug/
 
 # Yolo-World
 work_dirs
+src
+
+# Etc
+.DS_Store
