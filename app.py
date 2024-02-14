@@ -4,9 +4,9 @@ from functools import lru_cache
 import cv2
 import gradio as gr
 import numpy as np
-import supervision as sv
 import torch
 from mmdet.visualization import DetLocalVisualizer
+from mmdet.structures.det_data_sample import DetDataSample
 from mmengine.config import Config
 from mmengine.dataset import Compose
 from mmengine.runner import Runner
@@ -20,10 +20,6 @@ YOLO_CONFIG = os.path.join(
     "yolo_world_l_t2i_bn_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py",
 )
 YOLO_WEIGHT = "yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
-
-
-BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
-LABEL_ANNOTATOR = sv.LabelAnnotator()
 
 
 @lru_cache
@@ -47,19 +43,14 @@ def load_yolo_world_runner(config: str, checkpoint: str) -> Runner:
     return runner
 
 
-def segment(
-    image: Image.Image,
-    query: str,
+def detect_objects(
+    image_path: str,
+    texts: list[list[str]],
     max_num_boxes: int,
     score_thr: float,
     nms_thr: float,
-    image_path: str = os.path.join("work_dirs", "demo.png"),
-) -> Image.Image:
+) -> DetDataSample:
     yolo_runner = load_yolo_world_runner(YOLO_CONFIG, YOLO_WEIGHT)
-    texts = [[t.strip()] for t in query.split(",")] + [[" "]]
-    print("texts: ", texts)
-
-    image.save(image_path)
     data_info = dict(img_id=0, img_path=image_path, texts=texts)
     data_info = yolo_runner.pipeline(data_info)
     data_batch = dict(
@@ -74,12 +65,31 @@ def segment(
     keep = nms(pred_instances.bboxes, pred_instances.scores, iou_threshold=nms_thr)
     pred_instances = pred_instances[keep]
     pred_instances = pred_instances[pred_instances.scores.float() > score_thr]
-
     if len(pred_instances.scores) > max_num_boxes:
         indices = pred_instances.scores.float().topk(max_num_boxes)[1]
         pred_instances = pred_instances[indices]
     output.pred_instances = pred_instances
 
+    return output
+
+
+def segment(
+    image: Image.Image,
+    query: str,
+    max_num_boxes: int,
+    score_thr: float,
+    nms_thr: float,
+    image_path: str = os.path.join("work_dirs", "demo.png"),
+) -> Image.Image:
+    # Preparation
+    image.save(image_path)
+    texts = [[t.strip()] for t in query.split(",")] + [[" "]]
+    print("texts: ", texts)
+
+    # Open-world detection
+    output = detect_objects(image_path, texts, max_num_boxes, score_thr, nms_thr)
+
+    # Visualization
     visualizer = DetLocalVisualizer()
     visualizer.dataset_meta["classes"] = [t[0] for t in texts]
     visualizer.add_datasample(
@@ -123,7 +133,7 @@ app = gr.Interface(
             label="NMS Threshold",
         ),
     ],
-    outputs="image",
+    outputs=gr.Image(type="pil", label="output image"),
     allow_flagging="never",
     title="Fast Text to Segmentation with Yolo-World + Efficient-Vit SAM",
     examples=[
