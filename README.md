@@ -24,7 +24,7 @@ Open http://127.0.0.1:7860/ on your web browser.
 
 ![example_1](https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/9388e4ee-6f71-4428-b17c-d218fd059949)
 
-## Core Componentes
+## Core Components
 
 ### YOLO-World
 [YOLO-World](https://github.com/AILab-CVC/YOLO-World) is an open-vocabulary object detection model with high efficiency.
