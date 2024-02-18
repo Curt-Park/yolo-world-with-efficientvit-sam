@@ -1,5 +1,4 @@
 """Fast text to segmentation with yolo-world and efficient-vit sam."""
-
 import os
 
 import cv2
@@ -88,35 +87,37 @@ app = gr.Interface(
     ],
     outputs=gr.Image(type="pil", label="output image"),
     allow_flagging="never",
-    title="Fast Text to Segmentation with Yolo-World + Efficient-Vit SAM",
+    title="Fast Text to Segmentation with YOLO-World + EfficientViT SAM",
+    description="""
+    ## Core components
+    ### YOLO-World
+    [YOLO-World](https://github.com/AILab-CVC/YOLO-World) is an open-vocabulary object detection model with high efficiency.
+    On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100,
+    which outperforms many state-of-the-art methods in terms of both accuracy and speed.
+
+    ### EfficientViT SAM
+    [EfficientViT SAM](https://github.com/mit-han-lab/efficientvit) is a new family of accelerated segment anything models.
+    Thanks to the lightweight and hardware-efficient core building block,
+    it delivers 48.9× measured TensorRT speedup on A100 GPU over SAM-ViT-H without sacrificing performance.
+
+    ## Demo especially powered by
+    Roboflow's [inference](https://github.com/roboflow/inference) and [supervision](https://github.com/roboflow/supervision).
+
+    ## Example images came from
+    [Segment Anything Demo](https://segment-anything.com/demo) and [Unsplash](https://unsplash.com/).
+    """,
     examples=[
         [
-            os.path.join(os.path.dirname(__file__), "examples/dog.jpg"),
-            "dog",
+            os.path.join(os.path.dirname(__file__), "examples/livingroom.jpg"),
+            "table, lamp, dog, sofa, plant, clock, carpet, frame on the wall",
+            0.05,
+            0.5
         ],
         [
-            os.path.join(os.path.dirname(__file__), "examples/city.jpg"),
-            "building",
-        ],
-        [
-            os.path.join(os.path.dirname(__file__), "examples/food.jpg"),
-            "strawberry,banana",
-        ],
-        [
-            os.path.join(os.path.dirname(__file__), "examples/horse.jpg"),
-            "horse",
-        ],
-        [
-            os.path.join(os.path.dirname(__file__), "examples/bears.jpg"),
-            "bear",
-        ],
-        [
-            os.path.join(os.path.dirname(__file__), "examples/cats.jpg"),
-            "cat",
-        ],
-        [
-            os.path.join(os.path.dirname(__file__), "examples/fish.jpg"),
-            "fish",
+            os.path.join(os.path.dirname(__file__), "examples/cat_and_dogs.jpg"),
+            "cat, dog",
+            0.2,
+            0.5
         ],
     ],
 )
