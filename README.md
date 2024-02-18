@@ -16,7 +16,7 @@ make setup
 python app.py
 ```
 
-Open http://127.0.0.1:7860/ on your web-browser.
+Open http://127.0.0.1:7860/ on your web browser.
 
 ## Core Componentes
 
@@ -24,12 +24,16 @@ Open http://127.0.0.1:7860/ on your web-browser.
 [YOLO-World](https://github.com/AILab-CVC/YOLO-World) is an open-vocabulary object detection model with high efficiency.
 On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100,
 which outperforms many state-of-the-art methods in terms of both accuracy and speed.
+![image](https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/8a4a17bd-918d-478a-8451-f58e4a2dce79)
+<img width="1024" src="https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/fce57405-e18d-45f3-bea8-fc3971faf975">
 
 ### EfficientViT SAM
 [EfficientViT SAM](https://github.com/mit-han-lab/efficientvit) is a new family of accelerated segment anything models.
-Thanks to the lightweight and hardware-dfficient core building block,
+Thanks to the lightweight and hardware-efficient core building block,
 it delivers 48.9× measured TensorRT speedup on A100 GPU over SAM-ViT-H without sacrificing performance.
 
+<img width="1024" src="https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/9eec003f-47c9-43a5-86b0-82d6689e1bf9">
+<img width="1024" src="https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/d79973bb-0d80-4b64-a175-252de56d0d09">
 
 ## Powered By
 ```
