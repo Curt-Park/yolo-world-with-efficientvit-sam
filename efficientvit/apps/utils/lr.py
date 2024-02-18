@@ -28,7 +28,8 @@ class CosineLRwithWarmup(torch.optim.lr_scheduler._LRScheduler):
     def get_lr(self) -> list[float]:
         if self.last_epoch < self.warmup_steps:
             return [
-                (base_lr - self.warmup_lr) * (self.last_epoch + 1) / self.warmup_steps + self.warmup_lr
+                (base_lr - self.warmup_lr) * (self.last_epoch + 1) / self.warmup_steps
+                + self.warmup_lr
                 for base_lr in self.base_lrs
             ]
         else:
@@ -41,4 +42,7 @@ class CosineLRwithWarmup(torch.optim.lr_scheduler._LRScheduler):
                     break
             current_steps -= decay_steps[idx]
             decay_step = decay_steps[idx + 1] - decay_steps[idx]
-            return [0.5 * base_lr * (1 + math.cos(math.pi * current_steps / decay_step)) for base_lr in self.base_lrs]
+            return [
+                0.5 * base_lr * (1 + math.cos(math.pi * current_steps / decay_step))
+                for base_lr in self.base_lrs
+            ]

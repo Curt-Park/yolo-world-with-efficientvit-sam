@@ -37,11 +37,15 @@ def apply_droppath(
     all_valid_blocks = []
     for m in network.modules():
         for name, sub_module in m.named_children():
-            if isinstance(sub_module, ResidualBlock) and isinstance(sub_module.shortcut, IdentityLayer):
+            if isinstance(sub_module, ResidualBlock) and isinstance(
+                sub_module.shortcut, IdentityLayer
+            ):
                 all_valid_blocks.append((m, name, sub_module))
     all_valid_blocks = all_valid_blocks[skip:]
     for i, (m, name, sub_module) in enumerate(all_valid_blocks):
-        prob = drop_prob * (i + 1) / len(all_valid_blocks) if linear_decay else drop_prob
+        prob = (
+            drop_prob * (i + 1) / len(all_valid_blocks) if linear_decay else drop_prob
+        )
         new_module = DropPathResidualBlock(
             sub_module.main,
             sub_module.shortcut,
@@ -70,7 +74,11 @@ class DropPathResidualBlock(ResidualBlock):
         self.scheduled = scheduled
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if not self.training or self.drop_prob == 0 or not isinstance(self.shortcut, IdentityLayer):
+        if (
+            not self.training
+            or self.drop_prob == 0
+            or not isinstance(self.shortcut, IdentityLayer)
+        ):
             return ResidualBlock.forward(self, x)
         else:
             drop_prob = self.drop_prob
@@ -79,7 +87,9 @@ class DropPathResidualBlock(ResidualBlock):
             keep_prob = 1 - drop_prob
 
             shape = (x.shape[0],) + (1,) * (x.ndim - 1)
-            random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
+            random_tensor = keep_prob + torch.rand(
+                shape, dtype=x.dtype, device=x.device
+            )
             random_tensor.floor_()  # binarize
 
             res = self.forward_main(x) / keep_prob * random_tensor + self.shortcut(x)

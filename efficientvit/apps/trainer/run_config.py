@@ -47,11 +47,15 @@ class RunConfig:
             if hasattr(clas, "__annotations__"):
                 annotations.update(clas.__annotations__)
         for k, k_type in annotations.items():
-            assert hasattr(self, k), f"Key {k} with type {k_type} required for initialization."
+            assert hasattr(
+                self, k
+            ), f"Key {k} with type {k_type} required for initialization."
             attr = getattr(self, k)
             if k in self.none_allowed:
                 k_type = (k_type, type(None))
-            assert isinstance(attr, k_type), f"Key {k} must be type {k_type}, provided={attr}."
+            assert isinstance(
+                attr, k_type
+            ), f"Key {k} must be type {k_type}, provided={attr}."
 
         self.global_step = 0
         self.batch_per_epoch = 1
@@ -73,7 +77,9 @@ class RunConfig:
             wd, lr = json.loads(opt_key)
             net_params.append({"params": param_list, "weight_decay": wd, "lr": lr})
 
-        optimizer = build_optimizer(net_params, self.optimizer_name, self.optimizer_params, self.init_lr)
+        optimizer = build_optimizer(
+            net_params, self.optimizer_name, self.optimizer_params, self.init_lr
+        )
         # build lr scheduler
         if self.lr_schedule_name == "cosine":
             decay_steps = []

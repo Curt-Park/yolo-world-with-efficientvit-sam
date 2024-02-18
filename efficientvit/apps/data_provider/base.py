@@ -32,7 +32,11 @@ def random_drop_data(dataset, drop_size: int, seed: int, keys=("samples",)):
 
     dropped_dataset = copy.deepcopy(dataset)
     for key in keys:
-        setattr(dropped_dataset, key, [getattr(dropped_dataset, key)[idx] for idx in dropped_indexes])
+        setattr(
+            dropped_dataset,
+            key,
+            [getattr(dropped_dataset, key)[idx] for idx in dropped_indexes],
+        )
         setattr(dataset, key, [getattr(dataset, key)[idx] for idx in remaining_indexes])
     return dataset, dropped_dataset
 
@@ -93,9 +97,15 @@ class DataProvider:
             )
 
         # build data loader
-        self.train = self.build_dataloader(train_dataset, train_batch_size, n_worker, drop_last=drop_last, train=True)
-        self.valid = self.build_dataloader(val_dataset, test_batch_size, n_worker, drop_last=False, train=False)
-        self.test = self.build_dataloader(test_dataset, test_batch_size, n_worker, drop_last=False, train=False)
+        self.train = self.build_dataloader(
+            train_dataset, train_batch_size, n_worker, drop_last=drop_last, train=True
+        )
+        self.valid = self.build_dataloader(
+            val_dataset, test_batch_size, n_worker, drop_last=False, train=False
+        )
+        self.test = self.build_dataloader(
+            test_dataset, test_batch_size, n_worker, drop_last=False, train=False
+        )
         if self.valid is None:
             self.valid = self.test
         self.sub_train = None
@@ -113,11 +123,19 @@ class DataProvider:
     def build_datasets(self) -> tuple[any, any, any]:
         raise NotImplementedError
 
-    def build_dataloader(self, dataset: any or None, batch_size: int, n_worker: int, drop_last: bool, train: bool):
+    def build_dataloader(
+        self,
+        dataset: any or None,
+        batch_size: int,
+        n_worker: int,
+        drop_last: bool,
+        train: bool,
+    ):
         if dataset is None:
             return None
         if isinstance(self.image_size, list) and train:
-            from efficientvit.apps.data_provider.random_resolution._data_loader import RRSDataLoader
+            from efficientvit.apps.data_provider.random_resolution._data_loader import \
+                RRSDataLoader
 
             dataloader_class = RRSDataLoader
         else:
@@ -188,12 +206,18 @@ class DataProvider:
                 self.data_keys,
             )
         RRSController.ACTIVE_SIZE = self.active_image_size
-        train_dataset.transform = self.build_train_transform(image_size=self.active_image_size)
-        data_loader = self.build_dataloader(train_dataset, batch_size, self.train.num_workers, True, False)
+        train_dataset.transform = self.build_train_transform(
+            image_size=self.active_image_size
+        )
+        data_loader = self.build_dataloader(
+            train_dataset, batch_size, self.train.num_workers, True, False
+        )
 
         # pre-fetch data
         self.sub_train[self.active_image_size] = [
-            data for data in data_loader for _ in range(max(1, n_samples // len(train_dataset)))
+            data
+            for data in data_loader
+            for _ in range(max(1, n_samples // len(train_dataset)))
         ]
 
         return self.sub_train[self.active_image_size]

@@ -49,7 +49,9 @@ def zero_last_gamma(model: nn.Module, init_val=0) -> None:
     import efficientvit.models.nn.ops as ops
 
     for m in model.modules():
-        if isinstance(m, ops.ResidualBlock) and isinstance(m.shortcut, ops.IdentityLayer):
+        if isinstance(m, ops.ResidualBlock) and isinstance(
+            m.shortcut, ops.IdentityLayer
+        ):
             if isinstance(m.main, (ops.DSConv, ops.MBConv, ops.FusedMBConv)):
                 parent_module = m.main.point_conv
             elif isinstance(m.main, ops.ResBlock):

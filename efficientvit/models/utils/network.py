@@ -20,7 +20,9 @@ __all__ = [
 
 
 def is_parallel(model: nn.Module) -> bool:
-    return isinstance(model, (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel))
+    return isinstance(
+        model, (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel)
+    )
 
 
 def get_device(model: nn.Module) -> torch.device:
@@ -65,7 +67,9 @@ def build_kwargs_from_config(config: dict, target_func: callable) -> dict[str, a
     return kwargs
 
 
-def load_state_dict_from_file(file: str, only_state_dict=True) -> dict[str, torch.Tensor]:
+def load_state_dict_from_file(
+    file: str, only_state_dict=True
+) -> dict[str, torch.Tensor]:
     file = os.path.realpath(os.path.expanduser(file))
     checkpoint = torch.load(file, map_location="cpu")
     if only_state_dict and "state_dict" in checkpoint:

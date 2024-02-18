@@ -1,14 +1,23 @@
 """Fast text to segmentation with yolo-world and efficient-vit sam."""
+
 import os
 
 import cv2
 import gradio as gr
 import numpy as np
 import supervision as sv
+import torch
 from inference.models import YOLOWorld
+
+from efficientvit.models.efficientvit.sam import EfficientViTSamPredictor
+from efficientvit.sam_model_zoo import create_sam_model
 
 # Load models.
 yolo_world = YOLOWorld(model_id="yolo_world/l")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+sam = EfficientViTSamPredictor(
+    create_sam_model(name="xl1", weight_url="xl1.pt").to(device).eval()
+)
 
 # Load annotators.
 BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
@@ -16,7 +25,7 @@ MASK_ANNOTATOR = sv.MaskAnnotator()
 LABEL_ANNOTATOR = sv.LabelAnnotator()
 
 
-def segment(
+def detect(
     image: np.ndarray,
     query: str,
     confidence_threshold: float,
@@ -25,12 +34,23 @@ def segment(
     # Preparation.
     categories = [category.strip() for category in query.split(",")]
     yolo_world.set_classes(categories)
+    print("categories:", categories)
 
     # Object detection.
     results = yolo_world.infer(image, confidence=confidence_threshold)
     detections = sv.Detections.from_inference(results).with_nms(
         class_agnostic=True, threshold=nms_threshold
     )
+    print("detected:", detections)
+
+    # Segmentation.
+    sam.set_image(image, image_format="RGB")
+    masks = []
+    for xyxy in detections.xyxy:
+        mask, _, _ = sam.predict(box=xyxy, multimask_output=False)
+        masks.append(mask.squeeze())
+    detections.mask = np.array(masks)
+    print("masks shaped as", detections.mask.shape)
 
     # Annotation.
     output_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -45,7 +65,7 @@ def segment(
 
 
 app = gr.Interface(
-    fn=segment,
+    fn=detect,
     inputs=[
         gr.Image(type="numpy", label="input image"),
         gr.Text(info="you can input multiple words with comma (,)"),
@@ -104,4 +124,4 @@ app = gr.Interface(
 
 if __name__ == "__main__":
     os.system("make model")
-    app.launch()
+    app.launch(server_name="0.0.0.0")

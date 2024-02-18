@@ -68,18 +68,34 @@ def reset_bn(
                 def lambda_forward(x):
                     x = x.contiguous()
                     if sync:
-                        batch_mean = x.mean(0, keepdim=True).mean(2, keepdim=True).mean(3, keepdim=True)  # 1, C, 1, 1
+                        batch_mean = (
+                            x.mean(0, keepdim=True)
+                            .mean(2, keepdim=True)
+                            .mean(3, keepdim=True)
+                        )  # 1, C, 1, 1
                         batch_mean = sync_tensor(batch_mean, reduce="cat")
                         batch_mean = torch.mean(batch_mean, dim=0, keepdim=True)
 
                         batch_var = (x - batch_mean) * (x - batch_mean)
-                        batch_var = batch_var.mean(0, keepdim=True).mean(2, keepdim=True).mean(3, keepdim=True)
+                        batch_var = (
+                            batch_var.mean(0, keepdim=True)
+                            .mean(2, keepdim=True)
+                            .mean(3, keepdim=True)
+                        )
                         batch_var = sync_tensor(batch_var, reduce="cat")
                         batch_var = torch.mean(batch_var, dim=0, keepdim=True)
                     else:
-                        batch_mean = x.mean(0, keepdim=True).mean(2, keepdim=True).mean(3, keepdim=True)  # 1, C, 1, 1
+                        batch_mean = (
+                            x.mean(0, keepdim=True)
+                            .mean(2, keepdim=True)
+                            .mean(3, keepdim=True)
+                        )  # 1, C, 1, 1
                         batch_var = (x - batch_mean) * (x - batch_mean)
-                        batch_var = batch_var.mean(0, keepdim=True).mean(2, keepdim=True).mean(3, keepdim=True)
+                        batch_var = (
+                            batch_var.mean(0, keepdim=True)
+                            .mean(2, keepdim=True)
+                            .mean(3, keepdim=True)
+                        )
 
                     batch_mean = torch.squeeze(batch_mean)
                     batch_var = torch.squeeze(batch_var)
@@ -110,7 +126,11 @@ def reset_bn(
 
     tmp_model.eval()
     with torch.no_grad():
-        with tqdm(total=len(data_loader), desc="reset bn", disable=not progress_bar or not is_master()) as t:
+        with tqdm(
+            total=len(data_loader),
+            desc="reset bn",
+            disable=not progress_bar or not is_master(),
+        ) as t:
             for images in data_loader:
                 images = images.to(get_device(tmp_model))
                 tmp_model(images)

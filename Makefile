@@ -1,5 +1,5 @@
-EFFICIENT_SAM_URL := "https://huggingface.co/han-cai/efficientvit-sam/resolve/main"
-EFFICIENT_SAM_MODEL := "xl1.pt"
+EFFICIENTVIT_SAM_URL := "https://huggingface.co/han-cai/efficientvit-sam/resolve/main"
+EFFICIENTVIT_SAM_MODEL := "xl1.pt"
 
 
 define download
@@ -15,4 +15,4 @@ setup:
 
 
 model:
-	$(call download,$(EFFICIENT_SAM_URL),$(EFFICIENT_SAM_MODEL))
+	$(call download,$(EFFICIENTVIT_SAM_URL),$(EFFICIENTVIT_SAM_MODEL))

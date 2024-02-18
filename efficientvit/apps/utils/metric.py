@@ -25,7 +25,11 @@ class AverageMeter:
         self.sum += self._sync(val * delta_n)
 
     def get_count(self) -> torch.Tensor or int or float:
-        return self.count.item() if isinstance(self.count, torch.Tensor) and self.count.numel() == 1 else self.count
+        return (
+            self.count.item()
+            if isinstance(self.count, torch.Tensor) and self.count.numel() == 1
+            else self.count
+        )
 
     @property
     def avg(self):

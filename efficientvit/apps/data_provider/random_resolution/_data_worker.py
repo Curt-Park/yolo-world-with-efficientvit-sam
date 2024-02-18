@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import torch
 from torch._utils import ExceptionWrapper
-from torch.utils.data._utils import HAS_NUMPY, IS_WINDOWS, MP_STATUS_CHECK_INTERVAL, signal_handling
+from torch.utils.data._utils import (HAS_NUMPY, IS_WINDOWS,
+                                     MP_STATUS_CHECK_INTERVAL, signal_handling)
 
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
@@ -40,7 +41,9 @@ if IS_WINDOWS:
 
             # Value obtained from https://msdn.microsoft.com/en-us/library/ms684880.aspx
             SYNCHRONIZE = 0x00100000
-            self.manager_handle = self.kernel32.OpenProcess(SYNCHRONIZE, 0, self.manager_pid)
+            self.manager_handle = self.kernel32.OpenProcess(
+                SYNCHRONIZE, 0, self.manager_pid
+            )
 
             if not self.manager_handle:
                 raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]
@@ -50,7 +53,9 @@ if IS_WINDOWS:
         def is_alive(self):
             if not self.manager_dead:
                 # Value obtained from https://msdn.microsoft.com/en-us/library/windows/desktop/ms687032.aspx
-                self.manager_dead = self.kernel32.WaitForSingleObject(self.manager_handle, 0) == 0
+                self.manager_dead = (
+                    self.kernel32.WaitForSingleObject(self.manager_handle, 0) == 0
+                )
             return not self.manager_dead
 
 else:
@@ -84,7 +89,9 @@ class WorkerInfo:
 
     def __setattr__(self, key, val):
         if self.__initialized:
-            raise RuntimeError("Cannot assign attributes to {} objects".format(self.__class__.__name__))
+            raise RuntimeError(
+                "Cannot assign attributes to {} objects".format(self.__class__.__name__)
+            )
         return super().__setattr__(key, val)
 
     def __repr__(self):
@@ -163,6 +170,7 @@ class _ResumeIteration:
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 
 # This function generates an array of int32 as the seed for
 # `numpy.random`, in order to prevent state collision due to same
@@ -267,7 +275,9 @@ def _worker_loop(
             dataset = apply_random_seed(dataset, shared_rng)
 
         global _worker_info
-        _worker_info = WorkerInfo(id=worker_id, num_workers=num_workers, seed=seed, dataset=dataset)
+        _worker_info = WorkerInfo(
+            id=worker_id, num_workers=num_workers, seed=seed, dataset=dataset
+        )
 
         from torch.utils.data import _DatasetKind
 
@@ -277,9 +287,13 @@ def _worker_loop(
             if init_fn is not None:
                 init_fn(worker_id)
 
-            fetcher = _DatasetKind.create_fetcher(dataset_kind, dataset, auto_collation, collate_fn, drop_last)
+            fetcher = _DatasetKind.create_fetcher(
+                dataset_kind, dataset, auto_collation, collate_fn, drop_last
+            )
         except Exception:
-            init_exception = ExceptionWrapper(where="in DataLoader worker process {}".format(worker_id))
+            init_exception = ExceptionWrapper(
+                where="in DataLoader worker process {}".format(worker_id)
+            )
 
         # When using Iterable mode, some worker can exit earlier than others due
         # to the IterableDataset behaving differently for different workers.
@@ -313,7 +327,9 @@ def _worker_loop(
                     dataset = apply_random_seed(dataset, shared_rng)
 
                 # Recreate the fetcher for worker-reuse policy
-                fetcher = _DatasetKind.create_fetcher(dataset_kind, dataset, auto_collation, collate_fn, drop_last)
+                fetcher = _DatasetKind.create_fetcher(
+                    dataset_kind, dataset, auto_collation, collate_fn, drop_last
+                )
                 continue
             elif r is None:
                 # Received the final signal
@@ -336,7 +352,10 @@ def _worker_loop(
                 try:
                     data = fetcher.fetch(index)
                 except Exception as e:
-                    if isinstance(e, StopIteration) and dataset_kind == _DatasetKind.Iterable:
+                    if (
+                        isinstance(e, StopIteration)
+                        and dataset_kind == _DatasetKind.Iterable
+                    ):
                         data = _IterableDatasetStopIteration(worker_id)
                         # Set `iteration_end`
                         #   (1) to save future `next(...)` calls, and
@@ -346,7 +365,9 @@ def _worker_loop(
                         # It is important that we don't store exc_info in a variable.
                         # `ExceptionWrapper` does the correct thing.
                         # See NOTE [ Python Traceback Reference Cycle Problem ]
-                        data = ExceptionWrapper(where="in DataLoader worker process {}".format(worker_id))
+                        data = ExceptionWrapper(
+                            where="in DataLoader worker process {}".format(worker_id)
+                        )
             data_queue.put((idx, data))
             del data, idx, index, r  # save memory
     except KeyboardInterrupt:

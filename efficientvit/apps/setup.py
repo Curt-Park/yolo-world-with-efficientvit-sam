@@ -12,19 +12,13 @@ import torch.nn as nn
 
 from efficientvit.apps.data_provider import DataProvider
 from efficientvit.apps.trainer.run_config import RunConfig
-from efficientvit.apps.utils import (
-    dist_init,
-    dump_config,
-    get_dist_local_rank,
-    get_dist_rank,
-    get_dist_size,
-    init_modules,
-    is_master,
-    load_config,
-    partial_update_config,
-    zero_last_gamma,
-)
-from efficientvit.models.utils import build_kwargs_from_config, load_state_dict_from_file
+from efficientvit.apps.utils import (dist_init, dump_config,
+                                     get_dist_local_rank, get_dist_rank,
+                                     get_dist_size, init_modules, is_master,
+                                     load_config, partial_update_config,
+                                     zero_last_gamma)
+from efficientvit.models.utils import (build_kwargs_from_config,
+                                       load_state_dict_from_file)
 
 __all__ = [
     "save_exp_config",
@@ -60,7 +54,9 @@ def setup_seed(manual_seed: int, resume: bool) -> None:
     torch.cuda.manual_seed_all(manual_seed)
 
 
-def setup_exp_config(config_path: str, recursive=True, opt_args: dict or None = None) -> dict:
+def setup_exp_config(
+    config_path: str, recursive=True, opt_args: dict or None = None
+) -> dict:
     # load config
     if not os.path.isfile(config_path):
         raise ValueError(config_path)
@@ -87,15 +83,23 @@ def setup_exp_config(config_path: str, recursive=True, opt_args: dict or None = 
 
 
 def setup_data_provider(
-    exp_config: dict, data_provider_classes: list[type[DataProvider]], is_distributed: bool = True
+    exp_config: dict,
+    data_provider_classes: list[type[DataProvider]],
+    is_distributed: bool = True,
 ) -> DataProvider:
     dp_config = exp_config["data_provider"]
     dp_config["num_replicas"] = get_dist_size() if is_distributed else None
     dp_config["rank"] = get_dist_rank() if is_distributed else None
-    dp_config["test_batch_size"] = dp_config.get("test_batch_size", None) or dp_config["base_batch_size"] * 2
-    dp_config["batch_size"] = dp_config["train_batch_size"] = dp_config["base_batch_size"]
+    dp_config["test_batch_size"] = (
+        dp_config.get("test_batch_size", None) or dp_config["base_batch_size"] * 2
+    )
+    dp_config["batch_size"] = dp_config["train_batch_size"] = dp_config[
+        "base_batch_size"
+    ]
 
-    data_provider_lookup = {provider.name: provider for provider in data_provider_classes}
+    data_provider_lookup = {
+        provider.name: provider for provider in data_provider_classes
+    }
     data_provider_class = data_provider_lookup[dp_config["dataset"]]
 
     data_provider_kwargs = build_kwargs_from_config(dp_config, data_provider_class)
@@ -104,7 +108,9 @@ def setup_data_provider(
 
 
 def setup_run_config(exp_config: dict, run_config_cls: type[RunConfig]) -> RunConfig:
-    exp_config["run_config"]["init_lr"] = exp_config["run_config"]["base_lr"] * get_dist_size()
+    exp_config["run_config"]["init_lr"] = (
+        exp_config["run_config"]["base_lr"] * get_dist_size()
+    )
 
     run_config = run_config_cls(**exp_config["run_config"])
 

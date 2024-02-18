@@ -10,26 +10,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from segment_anything import SamAutomaticMaskGenerator
-from segment_anything.modeling import MaskDecoder, PromptEncoder, TwoWayTransformer
+from segment_anything.modeling import (MaskDecoder, PromptEncoder,
+                                       TwoWayTransformer)
 from segment_anything.modeling.mask_decoder import MaskDecoder
 from segment_anything.modeling.prompt_encoder import PromptEncoder
 from segment_anything.utils.amg import build_all_layer_point_grids
 from segment_anything.utils.transforms import ResizeLongestSide
 from torchvision.transforms.functional import resize, to_pil_image
 
-from efficientvit.models.efficientvit.backbone import EfficientViTBackbone, EfficientViTLargeBackbone
-from efficientvit.models.nn import (
-    ConvLayer,
-    DAGBlock,
-    FusedMBConv,
-    IdentityLayer,
-    MBConv,
-    OpSequential,
-    ResBlock,
-    ResidualBlock,
-    UpSampleLayer,
-    build_norm,
-)
+from efficientvit.models.efficientvit.backbone import (
+    EfficientViTBackbone, EfficientViTLargeBackbone)
+from efficientvit.models.nn import (ConvLayer, DAGBlock, FusedMBConv,
+                                    IdentityLayer, MBConv, OpSequential,
+                                    ResBlock, ResidualBlock, UpSampleLayer,
+                                    build_norm)
 from efficientvit.models.utils import build_kwargs_from_config, get_device
 
 __all__ = [
@@ -84,11 +78,15 @@ class SamResize:
         """
         Expects a numpy array with shape HxWxC in uint8 format.
         """
-        target_size = self.get_preprocess_shape(image.shape[0], image.shape[1], self.size)
+        target_size = self.get_preprocess_shape(
+            image.shape[0], image.shape[1], self.size
+        )
         return np.array(resize(to_pil_image(image), target_size))
 
     @staticmethod
-    def get_preprocess_shape(oldh: int, oldw: int, long_side_length: int) -> tuple[int, int]:
+    def get_preprocess_shape(
+        oldh: int, oldw: int, long_side_length: int
+    ) -> tuple[int, int]:
         """
         Compute the output size given input size and target long side length.
         """
@@ -170,11 +168,15 @@ class SamNeck(DAGBlock):
             )
         }
 
-        super(SamNeck, self).__init__(inputs, "add", None, middle=middle, outputs=outputs)
+        super(SamNeck, self).__init__(
+            inputs, "add", None, middle=middle, outputs=outputs
+        )
 
 
 class EfficientViTSamImageEncoder(nn.Module):
-    def __init__(self, backbone: EfficientViTBackbone or EfficientViTLargeBackbone, neck: SamNeck):
+    def __init__(
+        self, backbone: EfficientViTBackbone or EfficientViTLargeBackbone, neck: SamNeck
+    ):
         super().__init__()
         self.backbone = backbone
         self.neck = neck
@@ -233,7 +235,9 @@ class EfficientViTSam(nn.Module):
             align_corners=False,
         )
         masks = masks[..., : input_size[0], : input_size[1]]
-        masks = F.interpolate(masks, original_size, mode="bilinear", align_corners=False)
+        masks = F.interpolate(
+            masks, original_size, mode="bilinear", align_corners=False
+        )
         return masks
 
 
@@ -284,7 +288,9 @@ class EfficientViTSamPredictor:
             *self.original_size, long_side_length=self.model.image_size[0]
         )
 
-        torch_data = self.model.transform(image).unsqueeze(dim=0).to(get_device(self.model))
+        torch_data = (
+            self.model.transform(image).unsqueeze(dim=0).to(get_device(self.model))
+        )
         self.features = self.model.image_encoder(torch_data)
         self.is_image_set = True
 
@@ -330,15 +336,21 @@ class EfficientViTSamPredictor:
             a subsequent iteration as mask input.
         """
         if not self.is_image_set:
-            raise RuntimeError("An image must be set with .set_image(...) before mask prediction.")
+            raise RuntimeError(
+                "An image must be set with .set_image(...) before mask prediction."
+            )
 
         device = get_device(self.model)
         # Transform input prompts
         coords_torch, labels_torch, box_torch, mask_input_torch = None, None, None, None
         if point_coords is not None:
-            assert point_labels is not None, "point_labels must be supplied if point_coords is supplied."
+            assert (
+                point_labels is not None
+            ), "point_labels must be supplied if point_coords is supplied."
             point_coords = self.apply_coords(point_coords)
-            coords_torch = torch.as_tensor(point_coords, dtype=torch.float, device=device)
+            coords_torch = torch.as_tensor(
+                point_coords, dtype=torch.float, device=device
+            )
             labels_torch = torch.as_tensor(point_labels, dtype=torch.int, device=device)
             coords_torch, labels_torch = coords_torch[None, :, :], labels_torch[None, :]
         if box is not None:
@@ -346,7 +358,9 @@ class EfficientViTSamPredictor:
             box_torch = torch.as_tensor(box, dtype=torch.float, device=device)
             box_torch = box_torch[None, :]
         if mask_input is not None:
-            mask_input_torch = torch.as_tensor(mask_input, dtype=torch.float, device=device)
+            mask_input_torch = torch.as_tensor(
+                mask_input, dtype=torch.float, device=device
+            )
             mask_input_torch = mask_input_torch[None, :, :, :]
 
         masks, iou_predictions, low_res_masks = self.predict_torch(
@@ -409,7 +423,9 @@ class EfficientViTSamPredictor:
             a subsequent iteration as mask input.
         """
         if not self.is_image_set:
-            raise RuntimeError("An image must be set with .set_image(...) before mask prediction.")
+            raise RuntimeError(
+                "An image must be set with .set_image(...) before mask prediction."
+            )
 
         if point_coords is not None:
             points = (point_coords, point_labels)
@@ -433,7 +449,9 @@ class EfficientViTSamPredictor:
         )
 
         # Upscale the masks to the original image resolution
-        masks = self.model.postprocess_masks(low_res_masks, self.input_size, self.original_size)
+        masks = self.model.postprocess_masks(
+            low_res_masks, self.input_size, self.original_size
+        )
 
         if not return_logits:
             masks = masks > self.model.mask_threshold
@@ -479,7 +497,8 @@ class EfficientViTSamAutomaticMaskGenerator(SamAutomaticMaskGenerator):
             "coco_rle",
         ], f"Unknown output_mode {output_mode}."
         if output_mode == "coco_rle":
-            from pycocotools import mask as mask_utils  # type: ignore # noqa: F401
+            from pycocotools import \
+                mask as mask_utils  # type: ignore # noqa: F401
 
         if min_mask_region_area > 0:
             import cv2  # type: ignore # noqa: F401
@@ -498,7 +517,9 @@ class EfficientViTSamAutomaticMaskGenerator(SamAutomaticMaskGenerator):
         self.output_mode = output_mode
 
 
-def build_efficientvit_sam(image_encoder: EfficientViTSamImageEncoder, image_size: int) -> EfficientViTSam:
+def build_efficientvit_sam(
+    image_encoder: EfficientViTSamImageEncoder, image_size: int
+) -> EfficientViTSam:
     return EfficientViTSam(
         image_encoder=image_encoder,
         prompt_encoder=PromptEncoder(
@@ -524,7 +545,8 @@ def build_efficientvit_sam(image_encoder: EfficientViTSamImageEncoder, image_siz
 
 
 def efficientvit_sam_l0(image_size: int = 512, **kwargs) -> EfficientViTSam:
-    from efficientvit.models.efficientvit.backbone import efficientvit_backbone_l0
+    from efficientvit.models.efficientvit.backbone import \
+        efficientvit_backbone_l0
 
     backbone = efficientvit_backbone_l0(**kwargs)
 
@@ -542,7 +564,8 @@ def efficientvit_sam_l0(image_size: int = 512, **kwargs) -> EfficientViTSam:
 
 
 def efficientvit_sam_l1(image_size: int = 512, **kwargs) -> EfficientViTSam:
-    from efficientvit.models.efficientvit.backbone import efficientvit_backbone_l1
+    from efficientvit.models.efficientvit.backbone import \
+        efficientvit_backbone_l1
 
     backbone = efficientvit_backbone_l1(**kwargs)
 
@@ -560,7 +583,8 @@ def efficientvit_sam_l1(image_size: int = 512, **kwargs) -> EfficientViTSam:
 
 
 def efficientvit_sam_l2(image_size: int = 512, **kwargs) -> EfficientViTSam:
-    from efficientvit.models.efficientvit.backbone import efficientvit_backbone_l2
+    from efficientvit.models.efficientvit.backbone import \
+        efficientvit_backbone_l2
 
     backbone = efficientvit_backbone_l2(**kwargs)
 
@@ -578,7 +602,8 @@ def efficientvit_sam_l2(image_size: int = 512, **kwargs) -> EfficientViTSam:
 
 
 def efficientvit_sam_xl0(image_size: int = 1024, **kwargs) -> EfficientViTSam:
-    from efficientvit.models.efficientvit.backbone import EfficientViTLargeBackbone
+    from efficientvit.models.efficientvit.backbone import \
+        EfficientViTLargeBackbone
 
     backbone = EfficientViTLargeBackbone(
         width_list=[32, 64, 128, 256, 512, 1024],
@@ -603,7 +628,8 @@ def efficientvit_sam_xl0(image_size: int = 1024, **kwargs) -> EfficientViTSam:
 
 
 def efficientvit_sam_xl1(image_size: int = 1024, **kwargs) -> EfficientViTSam:
-    from efficientvit.models.efficientvit.backbone import EfficientViTLargeBackbone
+    from efficientvit.models.efficientvit.backbone import \
+        EfficientViTLargeBackbone
 
     backbone = EfficientViTLargeBackbone(
         width_list=[32, 64, 128, 256, 512, 1024],

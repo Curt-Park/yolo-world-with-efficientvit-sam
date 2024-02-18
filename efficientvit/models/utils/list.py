@@ -23,7 +23,11 @@ def list_mean(x: list) -> any:
 
 def weighted_list_sum(x: list, weights: list) -> any:
     assert len(x) == len(weights)
-    return x[0] * weights[0] if len(x) == 1 else x[0] * weights[0] + weighted_list_sum(x[1:], weights[1:])
+    return (
+        x[0] * weights[0]
+        if len(x) == 1
+        else x[0] * weights[0] + weighted_list_sum(x[1:], weights[1:])
+    )
 
 
 def list_join(x: list, sep="\t", format_str="%s") -> str:

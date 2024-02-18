@@ -47,10 +47,14 @@ def parse_unknown_args(unknown: list) -> dict:
             keys = key.split(".")
             dict_to_update = parsed_dict
             for key in keys[:-1]:
-                if not (key in dict_to_update and isinstance(dict_to_update[key], dict)):
+                if not (
+                    key in dict_to_update and isinstance(dict_to_update[key], dict)
+                ):
                     dict_to_update[key] = {}
                 dict_to_update = dict_to_update[key]
-            dict_to_update[keys[-1]] = parse_with_yaml(val)  # so we can parse lists, bools, etc...
+            dict_to_update[keys[-1]] = parse_with_yaml(
+                val
+            )  # so we can parse lists, bools, etc...
         else:
             parsed_dict[key] = parse_with_yaml(val)
     return parsed_dict
@@ -58,7 +62,11 @@ def parse_unknown_args(unknown: list) -> dict:
 
 def partial_update_config(config: dict, partial_config: dict) -> dict:
     for key in partial_config:
-        if key in config and isinstance(partial_config[key], dict) and isinstance(config[key], dict):
+        if (
+            key in config
+            and isinstance(partial_config[key], dict)
+            and isinstance(config[key], dict)
+        ):
             partial_update_config(config[key], partial_config[key])
         else:
             config[key] = partial_config[key]
@@ -86,7 +94,9 @@ class SafeLoaderWithTuple(yaml.SafeLoader):
         return tuple(self.construct_sequence(node))
 
 
-SafeLoaderWithTuple.add_constructor("tag:yaml.org,2002:python/tuple", SafeLoaderWithTuple.construct_python_tuple)
+SafeLoaderWithTuple.add_constructor(
+    "tag:yaml.org,2002:python/tuple", SafeLoaderWithTuple.construct_python_tuple
+)
 
 
 def load_config(filename: str) -> dict:

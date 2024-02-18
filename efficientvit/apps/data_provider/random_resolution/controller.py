@@ -81,7 +81,9 @@ class MyRandomResizedCrop(transforms.RandomResizedCrop):
     def forward(self, img: torch.Tensor) -> torch.Tensor:
         i, j, h, w = self.get_params(img, list(self.scale), list(self.ratio))
         target_size = RRSController.ACTIVE_SIZE
-        return F.resized_crop(img, i, j, h, w, list(target_size), get_interpolate(self.interpolation))
+        return F.resized_crop(
+            img, i, j, h, w, list(target_size), get_interpolate(self.interpolation)
+        )
 
     def __repr__(self) -> str:
         format_string = self.__class__.__name__

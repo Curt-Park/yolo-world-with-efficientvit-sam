@@ -54,7 +54,9 @@ def get_dist_local_rank() -> int:
     return int(os.environ["LOCAL_RANK"])
 
 
-def sync_tensor(tensor: torch.Tensor or float, reduce="mean") -> torch.Tensor or list[torch.Tensor]:
+def sync_tensor(
+    tensor: torch.Tensor or float, reduce="mean"
+) -> torch.Tensor or list[torch.Tensor]:
     if not isinstance(tensor, torch.Tensor):
         tensor = torch.Tensor(1).fill_(tensor).cuda()
     tensor_list = [torch.empty_like(tensor) for _ in range(get_dist_size())]
