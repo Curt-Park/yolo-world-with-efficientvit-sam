@@ -1,5 +1,7 @@
 # YOLO-World + EfficientViT SAM
 
+🤗 [HuggingFace Space](https://huggingface.co/spaces/curt-park/yolo-world-with-efficientvit-sam)
+
 ![example_0](https://github.com/Curt-Park/yolo-world-with-efficientvit-sam/assets/14961526/326bde19-d535-4be5-829e-782fce0c1d00)
 
 ## Prerequisites
