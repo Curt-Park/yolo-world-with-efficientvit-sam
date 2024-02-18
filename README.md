@@ -21,12 +21,12 @@ Open http://127.0.0.1:7860/ on your web-browser.
 ## Core Componentes
 
 ### YOLO-World
-YOLO-World is an open-vocabulary object detection model with high efficiency.
+[YOLO-World](https://github.com/AILab-CVC/YOLO-World) is an open-vocabulary object detection model with high efficiency.
 On the challenging LVIS dataset, YOLO-World achieves 35.4 AP with 52.0 FPS on V100,
-which outperforms many state-of-the-art methods in terms of both accuracy and speed. 
+which outperforms many state-of-the-art methods in terms of both accuracy and speed.
 
 ### EfficientViT SAM
-EfficientViT SAM is a new family of accelerated segment anything models.
+[EfficientViT SAM](https://github.com/mit-han-lab/efficientvit) is a new family of accelerated segment anything models.
 Thanks to the lightweight and hardware-dfficient core building block,
 it delivers 48.9× measured TensorRT speedup on A100 GPU over SAM-ViT-H without sacrificing performance.
 
@@ -34,7 +34,7 @@ it delivers 48.9× measured TensorRT speedup on A100 GPU over SAM-ViT-H without 
 ## Powered By
 ```
 @misc{zhang2024efficientvitsam,
-  title={EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss}, 
+  title={EfficientViT-SAM: Accelerated Segment Anything Model Without Performance Loss},
   author={Zhuoyang Zhang and Han Cai and Song Han},
   year={2024},
   eprint={2402.05008},
