@@ -1,7 +1,3 @@
-torch==2.0.1
-torchvision==0.15.2
-openmim==0.3.9
+inference[yolo-world]==0.9.13
+supervision==0.18.0
 gradio==4.18.0
-
---extra-index-url https://download.openmmlab.com/mmcv/dist/cpu/torch2.0/index.html
-mmcv==2.0.0

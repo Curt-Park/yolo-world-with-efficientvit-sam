@@ -1,128 +1,62 @@
+"""Fast text to segmentation with yolo-world and efficient-vit sam."""
 import os
-from functools import lru_cache
 
 import cv2
 import gradio as gr
 import numpy as np
-import torch
-from mmdet.visualization import DetLocalVisualizer
-from mmdet.structures.det_data_sample import DetDataSample
-from mmengine.config import Config
-from mmengine.dataset import Compose
-from mmengine.runner import Runner
-from mmengine.runner.amp import autocast
-from mmyolo.registry import RUNNERS
-from PIL import Image
-from torchvision.ops import nms
+import supervision as sv
+from inference.models import YOLOWorld
 
-YOLO_CONFIG = os.path.join(
-    "configs",
-    "yolo_world_l_t2i_bn_2e-4_100e_4x8gpus_obj365v1_goldg_train_lvis_minival.py",
-)
-YOLO_WEIGHT = "yolo_world_l_clip_base_dual_vlpan_2e-3adamw_32xb16_100e_o365_goldg_train_pretrained-0e566235.pth"
+# Load models.
+yolo_world = YOLOWorld(model_id="yolo_world/l")
 
-
-@lru_cache
-def load_yolo_world_runner(config: str, checkpoint: str) -> Runner:
-    cfg = Config.fromfile(config)
-    cfg.load_from = checkpoint
-    cfg.work_dir = os.path.join(
-        "work_dirs", os.path.splitext(os.path.basename(config))[0]
-    )
-    if "runner_type" not in cfg:
-        runner = Runner.from_cfg(cfg)
-    else:
-        runner = RUNNERS.build(cfg)
-    runner.call_hook("before_run")
-    runner.load_or_resume()
-    pipeline = cfg.test_dataloader.dataset.pipeline
-    runner.pipeline = Compose(pipeline)
-    if not torch.cuda.is_available():
-        runner.model.cpu()
-    runner.model.eval()
-    return runner
-
-
-def detect_objects(
-    image_path: str,
-    texts: list[list[str]],
-    max_num_boxes: int,
-    score_thr: float,
-    nms_thr: float,
-) -> DetDataSample:
-    yolo_runner = load_yolo_world_runner(YOLO_CONFIG, YOLO_WEIGHT)
-    data_info = dict(img_id=0, img_path=image_path, texts=texts)
-    data_info = yolo_runner.pipeline(data_info)
-    data_batch = dict(
-        inputs=data_info["inputs"].unsqueeze(0),
-        data_samples=[data_info["data_samples"]],
-    )
-
-    with autocast(enabled=False), torch.no_grad():
-        output = yolo_runner.model.test_step(data_batch)[0]
-        pred_instances = output.pred_instances
-
-    keep = nms(pred_instances.bboxes, pred_instances.scores, iou_threshold=nms_thr)
-    pred_instances = pred_instances[keep]
-    pred_instances = pred_instances[pred_instances.scores.float() > score_thr]
-    if len(pred_instances.scores) > max_num_boxes:
-        indices = pred_instances.scores.float().topk(max_num_boxes)[1]
-        pred_instances = pred_instances[indices]
-    output.pred_instances = pred_instances
-
-    return output
+# Load annotators.
+BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
+MASK_ANNOTATOR = sv.MaskAnnotator()
+LABEL_ANNOTATOR = sv.LabelAnnotator()
 
 
 def segment(
-    image: Image.Image,
+    image: np.ndarray,
     query: str,
     max_num_boxes: int,
-    score_thr: float,
-    nms_thr: float,
-    image_path: str = os.path.join("work_dirs", "demo.png"),
-) -> Image.Image:
-    # Preparation
-    image.save(image_path)
-    texts = [[t.strip()] for t in query.split(",")] + [[" "]]
-    print("texts: ", texts)
+    confidence_threshold: float,
+    nms_threshold: float,
+) -> np.ndarray:
+    # Preparation.
+    categories = [category.strip() for category in query.split(",")]
+    yolo_world.set_classes(categories)
 
-    # Open-world detection
-    output = detect_objects(image_path, texts, max_num_boxes, score_thr, nms_thr)
-
-    # Visualization
-    visualizer = DetLocalVisualizer()
-    visualizer.dataset_meta["classes"] = [t[0] for t in texts]
-    visualizer.add_datasample(
-        "image",
-        np.array(image),
-        output,
-        draw_gt=False,
-        out_file=image_path,
-        pred_score_thr=score_thr,
+    # Object detection.
+    results = yolo_world.infer(image, confidence=confidence_threshold)
+    detections = sv.Detections.from_inference(results).with_nms(
+        class_agnostic=True, threshold=nms_threshold
     )
-    return Image.open(image_path)
+
+    # Annotation.
+    output_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    labels = [
+        f"{categories[class_id]}: {confidence:.2f}"
+        for class_id, confidence in zip(detections.class_id, detections.confidence)
+    ]
+    output_image = MASK_ANNOTATOR.annotate(output_image, detections)
+    output_image = BOUNDING_BOX_ANNOTATOR.annotate(output_image, detections)
+    output_image = LABEL_ANNOTATOR.annotate(output_image, detections, labels=labels)
+    return cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB)
 
 
 app = gr.Interface(
     fn=segment,
     inputs=[
-        gr.Image(type="pil", label="input image"),
+        gr.Image(type="numpy", label="input image"),
         gr.Text(info="you can input multiple words with comma (,)"),
-        gr.Slider(
-            minimum=1,
-            maximum=300,
-            value=100,
-            step=1,
-            interactive=True,
-            label="Maximum Number Boxes",
-        ),
         gr.Slider(
             minimum=0,
             maximum=1,
-            value=0.05,
-            step=0.001,
+            value=0.3,
+            step=0.01,
             interactive=True,
-            label="Score Threshold",
+            label="Confidence Threshold",
         ),
         gr.Slider(
             minimum=0,
