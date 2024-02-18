@@ -19,7 +19,6 @@ LABEL_ANNOTATOR = sv.LabelAnnotator()
 def segment(
     image: np.ndarray,
     query: str,
-    max_num_boxes: int,
     confidence_threshold: float,
     nms_threshold: float,
 ) -> np.ndarray:
@@ -62,7 +61,7 @@ app = gr.Interface(
             minimum=0,
             maximum=1,
             value=0.5,
-            step=0.001,
+            step=0.01,
             interactive=True,
             label="NMS Threshold",
         ),
