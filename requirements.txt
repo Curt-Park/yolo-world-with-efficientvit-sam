@@ -1,3 +1,7 @@
 inference[yolo-world]==0.9.13
 supervision==0.18.0
 gradio==4.18.0
+timm==0.9.12
+onnx==1.15.0
+onnxsim==0.4.35
+git+https://github.com/facebookresearch/segment-anything.git
