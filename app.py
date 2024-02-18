@@ -11,12 +11,14 @@ from inference.models import YOLOWorld
 from efficientvit.models.efficientvit.sam import EfficientViTSamPredictor
 from efficientvit.sam_model_zoo import create_sam_model
 
+
 # Load models.
 yolo_world = YOLOWorld(model_id="yolo_world/l")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 sam = EfficientViTSamPredictor(
     create_sam_model(name="xl1", weight_url="xl1.pt").to(device).eval()
 )
+
 
 # Load annotators.
 BOUNDING_BOX_ANNOTATOR = sv.BoundingBoxAnnotator()
@@ -85,7 +87,7 @@ app = gr.Interface(
             label="NMS Threshold",
         ),
     ],
-    outputs=gr.Image(type="pil", label="output image"),
+    outputs=gr.Image(type="numpy", label="output image"),
     allow_flagging="never",
     title="Fast Text to Segmentation with YOLO-World + EfficientViT SAM",
     description="""
