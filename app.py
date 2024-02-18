@@ -12,6 +12,9 @@ from efficientvit.models.efficientvit.sam import EfficientViTSamPredictor
 from efficientvit.sam_model_zoo import create_sam_model
 
 
+# Download model weights.
+os.system("make model")
+
 # Load models.
 yolo_world = YOLOWorld(model_id="yolo_world/l")
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -125,6 +128,4 @@ app = gr.Interface(
 )
 
 
-if __name__ == "__main__":
-    os.system("make model")
-    app.launch(server_name="0.0.0.0")
+app.launch(server_name="0.0.0.0")
